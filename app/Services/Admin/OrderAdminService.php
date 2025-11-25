@@ -22,6 +22,15 @@ class OrderAdminService
     }
 
     /**
+     * Mengambil semua order untuk halaman Index Admin.
+     * Meneruskan request ke Repository.
+     */
+    public function getAllOrders($perPage = 10, array $filters = [])
+    {
+        return $this->orderRepo->getAllOrders($perPage, $filters);
+    }
+
+    /**
      * Update status pesanan secara umum.
      * Menangani logika khusus jika status berubah jadi "dibatalkan" (Restock).
      */

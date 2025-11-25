@@ -30,4 +30,12 @@ interface OrderRepositoryInterface
      * @return \App\Models\Order
      */
     public function findByOrderNumber(string $orderNumber);
+
+    /**
+     * Mengambil semua data order dengan fitur Filter & Paginasi.
+     * * @param int $perPage Jumlah data per halaman (Default 10)
+     * @param array $filters Array berisi filter (search, status, tanggal, dll)
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getAllOrders($perPage = 10, array $filters = []);
 }

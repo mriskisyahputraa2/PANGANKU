@@ -17,31 +17,33 @@ class OrderManagementController extends Controller
     {
         $this->orderAdminService = $orderAdminService;
     }
-
     /**
-     * READ: Menampilkan daftar pesanan.
-     * (Untuk Read data sederhana, boleh langsung pakai Model Eloquent agar tidak over-engineering)
+     * Menampilkan halaman Daftar Pesanan.
      */
     public function index(Request $request)
     {
-        $orders = Order::with('user')
-            ->when($request->status && $request->status != 'all', function ($query) use ($request) {
-                return $query->where('status', $request->status);
-            })
-            ->when($request->search, function ($query) use ($request) {
-                return $query->where('order_number', 'like', '%' . $request->search . '%');
-            })
-            ->latest()
-            ->paginate($request->per_page ?? 10)
-            ->withQueryString();
+        // 1. Ambil input jumlah data per halaman (Default 10)
+        $perPage = $request->input('per_page', 10);
 
+        // 2. Kumpulkan semua input filter dari Frontend
+        $filters = [
+            'search' => $request->input('search'),
+            'status' => $request->input('status'),
+            'delivery_type' => $request->input('delivery_type'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+        ];
+
+        // 3. Panggil Service untuk mendapatkan data yang sudah difilter
+        // Controller tidak perlu tahu query 'where', 'like', dll.
+        $orders = $this->orderAdminService->getAllOrders($perPage, $filters);
+
+        // 4. Kirim data ke Tampilan (Inertia React)
         return Inertia::render('admin/order/index', [
             'orders' => $orders,
-            'filters' => [
-                'status' => $request->status ?? 'all',
-                'search' => $request->search ?? '',
-                'per_page' => $request->per_page ?? '10',
-            ]
+
+            // Kembalikan nilai filter ke frontend agar input tidak ter-reset saat refresh
+            'filters' => array_merge($filters, ['per_page' => $perPage]),
         ]);
     }
 
@@ -50,6 +52,7 @@ class OrderManagementController extends Controller
      */
     public function show($id)
     {
+        // Eager load items & product untuk detail
         $order = Order::with(['user', 'items.product'])->findOrFail($id);
 
         return Inertia::render('admin/order/show', [
@@ -65,7 +68,7 @@ class OrderManagementController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|string|in:menunggu_pembayaran,menunggu_verifikasi,diproses,dikirim,siap_diambil,selesai,dibatalkan',
-            'payment_status' => 'required|string|in:pending,paid,failed,expired',
+            'payment_status' => 'sometimes|string|in:pending,paid,failed,expired',
             'tracking_number' => 'nullable|string',
         ]);
 
@@ -73,13 +76,13 @@ class OrderManagementController extends Controller
             // Panggil Service untuk menangani logika berat (termasuk restock stok)
             $order = $this->orderAdminService->updateOrderStatus($id, $validated);
 
-            return redirect()->back()->with(
-                'success',
-                'Pesanan #' . $order->order_number . ' berhasil diperbarui.'
-            );
-
+            return redirect()
+                ->back()
+                ->with('success', 'Pesanan #' . $order->order_number . ' berhasil diperbarui.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal update: ' . $e->getMessage());
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal update: ' . $e->getMessage());
         }
     }
 }

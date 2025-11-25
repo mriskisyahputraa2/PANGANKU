@@ -1,324 +1,283 @@
-import InputError from '@/components/input-error';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link } from '@inertiajs/react';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import AppLayout from '@/layouts/app-layout'; // <-- Menggunakan AppLayout
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
-import { FormEvent } from 'react';
-import { toast } from 'sonner';
+    ArrowLeft,
+    Calendar,
+    Clock,
+    CreditCard,
+    Hash,
+    MapPin,
+    MessageCircle,
+    Package,
+    Truck,
+    User,
+} from 'lucide-react';
 
-// Tipe data (ambil dari model Anda)
-interface Product {
-    name: string;
-}
-interface User {
-    name: string;
-    email: string;
-}
-interface OrderItem {
-    id: number;
-    quantity: number;
-    price: number;
-    product: Product;
-}
-interface Order {
-    id: number;
-    order_number: string;
-    total_amount: number;
-    status: string; // <-- Menggunakan 'status'
-    payment_status: string;
-    shipping_address: string;
-    customer_name: string;
-    customer_phone: string;
-    payment_method: string;
-    tracking_number?: string;
-    user: User;
-    items: OrderItem[];
-}
+// Import Components
+import ActionButtons from '@/components/admin/orders/detail/action-buttons';
+import ItemsTable from '@/components/admin/orders/detail/order-summary';
+import StatusBadge from '@/components/admin/orders/status-badge';
+import { formatRupiah } from '@/lib/utils';
 
-// Helper untuk format Rupiah
-const formatRupiah = (number: number) => {
-    if (isNaN(number)) return 'Rp 0';
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-    }).format(number);
-};
+// --- HELPERS BARU ---
 
-// Helper untuk warna status (konsisten dengan index)
-const getStatusBadge = (status: string) => {
-    let color = '';
-    const safeStatus = status || 'default';
-    // ... (logika switch/case status seperti di index.tsx) ...
-    switch (safeStatus) {
-        case 'pending':
-        case 'menunggu_pembayaran':
-            color = 'bg-yellow-100 text-yellow-800 border-yellow-300';
-            break;
-        case 'processing':
-        case 'diproses':
-            color = 'bg-blue-100 text-blue-800 border-blue-300';
-            break;
-        case 'shipped':
-        case 'dikirim':
-            color = 'bg-indigo-100 text-indigo-800 border-indigo-300';
-            break;
-        case 'completed':
-        case 'selesai':
-            color = 'bg-green-100 text-green-800 border-green-300';
-            break;
-        case 'cancelled':
-        case 'dibatalkan':
-            color = 'bg-red-100 text-red-800 border-red-300';
-            break;
-        default:
-            color = 'bg-gray-100 text-gray-800 border-gray-300';
-            break;
-    }
-    return (
-        <Badge
-            variant="outline"
-            className={`capitalize ${color} border text-xs`}
-        >
-            {safeStatus.replace(/_/g, ' ')}
-        </Badge>
-    );
-};
+// 1. Format Jam ke AM/PM
+const formatTimeAMPM = (timeString) => {
+    if (!timeString) return '-';
+    // Asumsi timeString format "HH:mm" atau "HH:mm:ss"
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours), parseInt(minutes));
 
-export default function OrderShow({ order }: { order: Order }) {
-    const { data, setData, patch, processing, errors } = useForm({
-        status: order.status ?? 'pending', // <-- Menggunakan 'status'
-        tracking_number: order.tracking_number ?? '',
-        // Kita juga perlu payment_status sesuai controller Anda (jika ada)
-        // Jika tidak ada di controller, hapus baris ini
+    // Format ke en-US agar muncul AM/PM
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
     });
+};
 
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        // Menggunakan URL manual (TANPA ZIGGY)
-        patch(`/admin/orders/${order.id}`, {
-            onSuccess: () => toast.success('Status pesanan diperbarui!'),
-            onError: () => toast.error('Gagal memperbarui status.'),
-        });
-    };
+// 2. Generate Link WhatsApp
+const getWhatsappUrl = (phone) => {
+    if (!phone) return '#';
+    // Hapus karakter non-angka
+    let formatted = phone.replace(/\D/g, '');
+    // Ganti 0 di depan dengan 62
+    if (formatted.startsWith('0')) {
+        formatted = '62' + formatted.slice(1);
+    }
+    return `https://wa.me/${formatted}`;
+};
 
-    const isShipped = data.status === 'shipped' || data.status === 'dikirim';
+const breadcrumbs = [
+    { title: 'Dashboard', href: '/admin/dashboard' },
+    { title: 'Manajemen Pesanan', href: '/admin/orders' },
+    { title: 'Detail Pesanan' },
+];
+
+export default function OrderShow({ order }) {
+    const isDelivery = order.delivery_type === 'delivery';
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Pesanan', href: '/admin/orders' },
-                { title: 'Detail' },
-            ]}
-        >
-            <Head title={`Detail Pesanan #${order.order_number}`} />
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Order #${order.order_number}`} />
 
-            <div className="mb-4">
-                <Link href="/admin/orders">
-                    <Button variant="outline">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Kembali ke Daftar Pesanan
-                    </Button>
-                </Link>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Kolom Detail Item & Pelanggan */}
-                <div className="space-y-6 lg:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>
-                                Detail Pesanan: #{order.order_number}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <h3 className="mb-3 text-lg font-semibold">
-                                Item Pesanan
-                            </h3>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Produk</TableHead>
-                                        <TableHead>Kuantitas</TableHead>
-                                        <TableHead>Harga Satuan</TableHead>
-                                        <TableHead>Subtotal</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {order.items.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell>
-                                                {item.product.name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {item.quantity}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatRupiah(item.price)}
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatRupiah(
-                                                    item.price * item.quantity,
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                            <div className="mt-4 border-t pt-4 text-right">
-                                <p className="text-lg font-bold">
-                                    Total Pesanan:{' '}
-                                    {formatRupiah(order.total_amount)}
-                                </p>
+            <div className="w-full space-y-6 p-4 sm:p-6">
+                {/* HEADER */}
+                <div className="flex flex-col gap-4 rounded-xl border bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link href="/admin/orders">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10 shrink-0"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <div className="mb-1 flex items-center gap-3">
+                                <h1 className="text-xl font-bold tracking-tight text-gray-900">
+                                    {order.order_number}
+                                </h1>
+                                <StatusBadge status={order.status} />
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>
-                                Informasi Pembeli & Pengiriman
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <h4 className="font-semibold">
-                                        Nama Pembeli:
-                                    </h4>
-                                    <p>{order.customer_name}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">Email:</h4>
-                                    <p>{order.user.email}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">Telepon:</h4>
-                                    <p>{order.customer_phone}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">
-                                        Metode Bayar:
-                                    </h4>
-                                    <p className="capitalize">
-                                        {order.payment_method}
-                                    </p>
-                                </div>
-                                <div className="col-span-2">
-                                    <h4 className="font-semibold">
-                                        Alamat Pengiriman:
-                                    </h4>
-                                    <p>{order.shipping_address}</p>
-                                </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />{' '}
+                                    {new Date(order.created_at).toLocaleString(
+                                        'id-ID',
+                                    )}
+                                </span>
+                                <span className="text-gray-300">|</span>
+                                <span className="flex items-center gap-1">
+                                    <Hash className="h-3 w-3" /> ID: {order.id}
+                                </span>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
+
+                    <div className="flex-shrink-0">
+                        <ActionButtons order={order} />
+                    </div>
                 </div>
 
-                {/* Kolom Update Status */}
-                <div className="lg:col-span-1">
-                    <Card className="sticky top-24">
-                        <CardHeader>
-                            <CardTitle>Status Pesanan</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="mb-4">
-                                <h4 className="font-semibold">
-                                    Status Saat Ini:
-                                </h4>
-                                {getStatusBadge(order.status)}
-                            </div>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <Label htmlFor="status">Ubah Status</Label>
-                                    <Select
-                                        value={data.status}
-                                        onValueChange={(value) =>
-                                            setData('status', value)
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="menunggu_pembayaran">
-                                                Menunggu Pembayaran
-                                            </SelectItem>
-                                            <SelectItem value="diproses">
-                                                Diproses
-                                            </SelectItem>
-                                            <SelectItem value="dikirim">
-                                                Dikirim
-                                            </SelectItem>
-                                            <SelectItem value="selesai">
-                                                Selesai
-                                            </SelectItem>
-                                            <SelectItem value="dibatalkan">
-                                                Dibatalkan
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError
-                                        message={errors.status}
-                                        className="mt-2"
-                                    />
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    {/* === KOLOM KIRI (2/3) === */}
+                    <div className="space-y-6 xl:col-span-2">
+                        <ItemsTable order={order} />
+
+                        <Card>
+                            <CardHeader className="border-b bg-gray-50/50 py-3">
+                                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                    <CreditCard className="h-4 w-4 text-gray-500" />{' '}
+                                    Rincian Pembayaran
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between border-b py-2">
+                                            <span className="text-sm text-muted-foreground">
+                                                Metode Bayar
+                                            </span>
+                                            <span className="font-bold uppercase">
+                                                {order.payment_method}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                            <span className="text-sm text-muted-foreground">
+                                                Status Bayar
+                                            </span>
+                                            <span
+                                                className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase ${order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+                                            >
+                                                {order.payment_status}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between py-2">
+                                            <span className="text-sm text-muted-foreground">
+                                                Total Tagihan
+                                            </span>
+                                            <span className="text-lg font-bold text-primary">
+                                                {formatRupiah(
+                                                    order.total_amount,
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-3 text-xs font-bold text-muted-foreground uppercase">
+                                            Lampiran Bukti
+                                        </p>
+                                        {order.payment_proof ? (
+                                            <a
+                                                href={`/storage/${order.payment_proof}`}
+                                                target="_blank"
+                                                className="group relative block h-40 w-full overflow-hidden rounded-lg border bg-gray-100"
+                                            >
+                                                <img
+                                                    src={`/storage/${order.payment_proof}`}
+                                                    alt="Bukti"
+                                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                                    Lihat Gambar Asli
+                                                </div>
+                                            </a>
+                                        ) : (
+                                            <div className="flex h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed bg-gray-50 text-xs text-muted-foreground">
+                                                <span className="mb-1 text-lg opacity-50">
+                                                    🚫
+                                                </span>
+                                                Tidak ada bukti
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* === KOLOM KANAN (1/3) === */}
+                    <div className="space-y-6">
+                        <Card className="h-fit">
+                            <CardHeader className="border-b bg-gray-50/50 py-3">
+                                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                    <User className="h-4 w-4 text-gray-500" />{' '}
+                                    Data Pelanggan
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6 p-5">
+                                {/* Info User */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary uppercase">
+                                        {order.customer_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">
+                                            {order.customer_name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            User ID: {order.user_id || '-'}
+                                        </p>
+
+                                        {/* [PERBAIKAN 1] Link WhatsApp */}
+                                        <a
+                                            href={getWhatsappUrl(
+                                                order.customer_phone,
+                                            )}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-1.5 flex items-center gap-2 text-sm font-medium text-green-600 transition-colors hover:text-green-700 hover:underline"
+                                            title="Chat via WhatsApp"
+                                        >
+                                            <MessageCircle className="h-3.5 w-3.5" />
+                                            {order.customer_phone}
+                                        </a>
+                                    </div>
                                 </div>
 
-                                {isShipped && (
-                                    <div>
-                                        <Label htmlFor="tracking_number">
-                                            Nomor Resi
-                                        </Label>
-                                        <Input
-                                            id="tracking_number"
-                                            type="text"
-                                            placeholder="Masukkan nomor resi"
-                                            value={data.tracking_number}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'tracking_number',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={errors.tracking_number}
-                                            className="mt-2"
-                                        />
-                                    </div>
-                                )}
+                                <Separator />
 
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full"
-                                >
-                                    {processing
-                                        ? 'Memperbarui...'
-                                        : 'Simpan Perubahan'}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                                {/* Info Pengiriman */}
+                                <div>
+                                    <h4 className="mb-3 flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase">
+                                        {isDelivery ? (
+                                            <Truck className="h-3 w-3" />
+                                        ) : (
+                                            <Package className="h-3 w-3" />
+                                        )}
+                                        Info Pengiriman
+                                    </h4>
+
+                                    <div className="space-y-4 text-sm">
+                                        <div className="rounded border bg-gray-50 p-3">
+                                            <span className="mb-1 block text-xs text-gray-500">
+                                                Tipe:
+                                            </span>
+                                            <span className="font-medium text-gray-900">
+                                                {isDelivery
+                                                    ? 'Diantar Kurir (Delivery)'
+                                                    : 'Ambil Sendiri (Pickup)'}
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <span className="mb-1 block text-xs text-gray-500">
+                                                Alamat Tujuan:
+                                            </span>
+                                            <div className="flex items-start gap-2">
+                                                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                                                <p className="leading-snug">
+                                                    {isDelivery
+                                                        ? order.shipping_address
+                                                        : 'Toko PanganKU - Jl. Politeknik No. 1'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <span className="mb-1 block text-xs text-gray-500">
+                                                Waktu Request:
+                                            </span>
+                                            <div className="flex items-center gap-2 rounded bg-blue-50 px-3 py-2 font-mono font-medium text-blue-700">
+                                                <Clock className="h-4 w-4" />
+                                                {/* [PERBAIKAN 2] Format AM/PM */}
+                                                {formatTimeAMPM(
+                                                    order.pickup_time,
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
         </AppLayout>
