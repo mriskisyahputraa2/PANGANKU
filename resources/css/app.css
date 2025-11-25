@@ -1,0 +1,261 @@
+/* Font Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    /* --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji'; */
+
+    --font-sans:
+        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --radius: 0.75rem;
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ====================================================================== */
+/* PALET WARNA LIGHT MODE FINAL */
+/* ====================================================================== */
+:root {
+    --background: oklch(
+        0.98 0.01 240
+    ); /* Latar: Abu-abu kebiruan sangat terang */
+    --foreground: oklch(0.24 0.02 258); /* Teks: Hitam kebiruan yang lembut */
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.24 0.02 258);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.24 0.02 258);
+
+    /* Warna Aksen Utama HIJAU */
+    --primary: oklch(0.63 0.18 145); /* Hijau Cerah */
+    --primary-foreground: oklch(0.99 0.01 145); /* Putih kehijauan */
+
+    --secondary: oklch(0.94 0.02 258);
+    --secondary-foreground: oklch(0.24 0.02 258);
+    --muted: oklch(0.94 0.02 258);
+    --muted-foreground: oklch(0.5 0.02 258);
+    --accent: oklch(0.94 0.02 258);
+    --accent-foreground: oklch(0.24 0.02 258);
+
+    --destructive: oklch(0.58 0.24 27);
+    --destructive-foreground: oklch(0.99 0.01 27);
+    --border: oklch(0.91 0.01 258);
+    --input: oklch(0.91 0.01 258);
+    --ring: oklch(0.63 0.18 145 / 0.4);
+
+    /* Pengaturan Sidebar */
+    --sidebar: oklch(1 0 0);
+    --sidebar-foreground: oklch(0.24 0.02 258);
+    --sidebar-primary: oklch(0.63 0.18 145);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(
+        0.95 0.03 145
+    ); /* Latar item aktif: Hijau sangat pucat */
+    --sidebar-accent-foreground: oklch(
+        0.38 0.14 145
+    ); /* Teks item aktif: Hijau Tua */
+    --sidebar-border: oklch(0.91 0.01 258);
+}
+
+/* ====================================================================== */
+/* PALET WARNA DARK MODE FINAL */
+/* ====================================================================== */
+/*
+.dark {
+    --background: oklch(0.1 0.02 260);
+    --foreground: oklch(0.95 0.01 260);
+    --card: oklch(0.13 0.02 260);
+    --card-foreground: oklch(0.95 0.01 260);
+    --popover: oklch(0.1 0.02 260);
+    --popover-foreground: oklch(0.95 0.01 260);
+
+    --primary: oklch(
+        0.65 0.2 145
+    );
+    --primary-foreground: oklch(0.12 0.05 145);
+
+    --secondary: oklch(0.22 0.02 260);
+    --secondary-foreground: oklch(0.95 0.01 260);
+    --muted: oklch(0.22 0.02 260);
+    --muted-foreground: oklch(0.6 0.02 260);
+    --accent: oklch(0.22 0.02 260);
+    --accent-foreground: oklch(0.95 0.01 260);
+
+    --destructive: oklch(0.58 0.22 27);
+    --destructive-foreground: oklch(0.95 0.01 260);
+    --border: oklch(0.18 0.02 260);
+    --input: oklch(0.18 0.02 260);
+    --ring: oklch(0.65 0.2 145 / 0.4);
+
+    --sidebar: oklch(0.13 0.02 260);
+    --sidebar-foreground: oklch(0.95 0.01 260);
+    --sidebar-primary: oklch(0.65 0.2 145);
+    --sidebar-primary-foreground: oklch(0.12 0.05 145);
+    --sidebar-accent: oklch(
+        0.65 0.2 145 / 0.1
+    );
+    --sidebar-accent-foreground: oklch(
+        1 0 0
+    );
+    --sidebar-border: oklch(0.18 0.02 260);
+}
+
+*/
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+    .btn {
+        @apply rounded-lg; /* Memberi efek rounded yang lebih lembut */
+    }
+}
+
+/* ====================================================================== */
+/* ## KODE KUSTOM UNTUK ANIMASI LOGIN (DITAMBAHKAN DI SINI) ##            */
+/* ====================================================================== */
+
+/* Animasi untuk latar belakang gambar login */
+@keyframes zoom-in-pan {
+    0% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1.15);
+    }
+}
+
+.bg-zoom-in-pan {
+    animation: zoom-in-pan 20s ease-in-out infinite alternate;
+}
+
+/* Animasi untuk efek kilau pada tombol */
+.shine-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.shine-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(25deg);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.shine-effect:hover::after {
+    opacity: 1;
+    animation: shine 1.5s ease-out;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-75%) translateY(-75%) rotate(25deg);
+    }
+    100% {
+        transform: translateX(75%) translateY(75%) rotate(25deg);
+    }
+}
+
+/* ====================================================================== */
+/* ## KODE KUSTOM UNTUK SCROLLBAR HIJAU (LATAR TRANSPARAN) ##             */
+/* ====================================================================== */
+
+/* Untuk browser berbasis Firefox */
+html {
+    scrollbar-width: thin;
+    /* Ganti warna kedua menjadi 'transparent' */
+    scrollbar-color: var(--primary) transparent;
+}
+
+/* Untuk browser berbasis WebKit (Chrome, Safari, Edge, Opera) */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    /* Ganti warna latar menjadi transparan */
+    background-color: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: var(--primary); /* Warna handle scrollbar, hijau utama */
+    border-radius: var(--radius); /* Memberi sudut yang membulat */
+    border: 2px solid var(--background); /* Memberi sedikit jarak dari tepi */
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(
+        0.58 0.18 145
+    ); /* Warna handle saat cursor di atasnya (hijau sedikit lebih gelap) */
+}
