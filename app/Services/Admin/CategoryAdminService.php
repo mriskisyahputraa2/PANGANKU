@@ -15,9 +15,14 @@ class CategoryAdminService
         $this->categoryRepo = $categoryRepo;
     }
 
-    public function getAllCategories()
+    public function getAllCategories($perPage = 10, $search = null)
     {
-        return $this->categoryRepo->getAll();
+        return $this->categoryRepo->getAll($perPage, $search);
+    }
+
+    public function getForDropdown()
+    {
+        return $this->categoryRepo->getDropdownList();
     }
 
     public function createCategory(array $data)

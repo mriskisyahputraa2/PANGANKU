@@ -1,13 +1,3 @@
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,20 +7,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@/components/ui/pagination';
+// [BARU] Import komponen Select
 import {
     Select,
     SelectContent,
@@ -38,53 +16,29 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-// Ganti AdminLayout dengan layout yang Anda gunakan
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Ellipsis,
-    FilePen,
-    PlusCircle,
-    Search,
-    Tags, // Mengganti ikon CalendarDays dengan Tags
-    Trash2,
-} from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { PlusCircle, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-// Sesuaikan breadcrumbs untuk halaman kategori
-const breadcrumbs = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Manajemen Kategori' },
-];
+// Komponen Pecahan
+import CategoryFormDialog from '@/components/admin/categories/category-form-dialog';
+import CategoryTable from '@/components/admin/categories/category-table';
+import DeleteDialog from '@/components/admin/products/delete-dialog';
 
-export default function Index({ categories, filters }) {
-    const { flash } = usePage().props;
+export default function CategoryIndex({ categories, filters }) {
     const [search, setSearch] = useState(filters.search || '');
-    const [deleteId, setDeleteId] = useState(null);
+    // [BARU] State per_page diambil dari filters controller (default 10)
+    const [perPage, setPerPage] = useState(String(filters.per_page || '10'));
+
     const isInitialMount = useRef(true);
 
-    useEffect(() => {
-        // TAMBAHKAN BARIS INI UNTUK DEBUGGING
-        console.log('Flash message received:', flash);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
 
-        if (flash && flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash && flash.error) {
-            toast.error(flash.error);
-        }
-    }, [flash]);
-
-    // Debounce untuk fungsi pencarian
+    // 1. Handle Search (Debounce)
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -92,257 +46,172 @@ export default function Index({ categories, filters }) {
         }
         const timeout = setTimeout(() => {
             router.get(
-                '/admin/categories', // Ganti URL ke route kategori
-                { search, per_page: filters.per_page },
+                '/admin/categories',
+                { search, per_page: perPage },
                 { preserveState: true, replace: true },
             );
         }, 500);
         return () => clearTimeout(timeout);
-    }, [search, filters.per_page]);
+    }, [search]);
 
-    const handlePerPageChange = (perPage) => {
+    // 2. [BARU] Handle Per Page Change (Langsung reload)
+    const handlePerPageChange = (val) => {
+        setPerPage(val);
         router.get(
-            '/admin/categories', // Ganti URL ke route kategori
-            { search: filters.search, per_page: perPage },
+            '/admin/categories',
+            { search, per_page: val },
             { preserveState: true, replace: true },
         );
     };
 
+    const handleCreate = () => {
+        setSelectedCategory(null);
+        setIsFormOpen(true);
+    };
+    const handleEdit = (cat) => {
+        setSelectedCategory(cat);
+        setIsFormOpen(true);
+    };
     const handleDelete = () => {
         if (deleteId) {
             router.delete(`/admin/categories/${deleteId}`, {
-                // Ganti URL ke route kategori
+                onSuccess: () => toast.success('Kategori berhasil dihapus'),
                 onFinish: () => setDeleteId(null),
                 preserveScroll: true,
             });
         }
     };
 
+    const breadcrumbs = [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Manajemen Kategori' },
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Kategori" />
-            <Card className="flex h-full flex-1 flex-col">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Daftar Kategori Produk</CardTitle>
-                        <Link href="/admin/categories/create">
-                            {' '}
-                            {/* Ganti URL ke route kategori */}
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Tambah Kategori
-                            </Button>
-                        </Link>
+
+            <Card className="flex h-full flex-1 flex-col border-0 bg-transparent shadow-none sm:border sm:bg-white sm:shadow-sm">
+                <CardHeader className="px-4 sm:px-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle className="text-xl">
+                                Kategori Produk
+                            </CardTitle>
+                            <CardDescription>
+                                Kelompokkan produk agar mudah dicari pembeli.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            onClick={handleCreate}
+                            className="w-full bg-primary sm:w-auto"
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" /> Tambah
+                            Kategori
+                        </Button>
                     </div>
-                    <CardDescription>
-                        Kelola semua kategori produk untuk PanganKU di sini.
-                    </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-1 flex-col">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="relative w-full max-w-xs">
+
+                <CardContent className="flex flex-1 flex-col px-4 sm:px-6">
+                    {/* AREA FILTER & SEARCH (Dibuat Responsif Sejajar) */}
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        {/* Search Bar */}
+                        <div className="relative w-full sm:max-w-sm">
                             <Input
-                                type="search"
-                                placeholder="Cari nama kategori..."
+                                placeholder="Cari kategori..."
+                                className="bg-white pl-9"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9"
                             />
                             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         </div>
-                        <Select
-                            onValueChange={handlePerPageChange}
-                            defaultValue={String(filters.per_page || '5')}
-                        >
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="5">5 Data</SelectItem>
-                                <SelectItem value="10">10 Data</SelectItem>
-                                <SelectItem value="20">20 Data</SelectItem>
-                                <SelectItem value="50">50 Data</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex-1 overflow-auto rounded-md border">
-                        <Table>
-                            <TableHeader className="font-bold uppercase">
-                                <TableRow>
-                                    <TableHead className="w-10">No.</TableHead>
-                                    <TableHead>Nama Kategori</TableHead>
-                                    <TableHead>Slug</TableHead>
-                                    <TableHead className="w-20 text-right">
-                                        Aksi
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {categories.data.length > 0 ? (
-                                    categories.data.map((category, index) => (
-                                        <TableRow key={category.id}>
-                                            <TableCell>
-                                                {categories.from + index}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {category.name}
-                                            </TableCell>
-                                            <TableCell className="">
-                                                {category.slug}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                        >
-                                                            <Ellipsis className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={`/admin/categories/${category.id}/edit`}
-                                                            >
-                                                                {' '}
-                                                                {/* Ganti URL */}
-                                                                <FilePen className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-red-600 focus:text-red-600"
-                                                            onClick={() =>
-                                                                setDeleteId(
-                                                                    category.id,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={4}
-                                            className="h-full p-8 text-center"
-                                        >
-                                            {' '}
-                                            {/* Sesuaikan colSpan */}
-                                            <div className="flex flex-col items-center justify-center gap-4">
-                                                <Tags className="h-16 w-16 text-gray-300 dark:text-gray-700" />{' '}
-                                                {/* Ganti Ikon */}
-                                                <h3 className="text-xl font-bold">
-                                                    Belum Ada Kategori
-                                                </h3>
-                                                <p className="text-muted-foreground">
-                                                    Buat kategori produk baru
-                                                    untuk memulai mengelompokkan
-                                                    produk Anda.
-                                                </p>
-                                                <Link href="/admin/categories/create">
-                                                    {' '}
-                                                    {/* Ganti URL */}
-                                                    <Button className="mt-2">
-                                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                                        Buat Kategori Pertama
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-                {categories.data.length > 0 && (
-                    <CardFooter className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                        <div className="text-sm text-muted-foreground">
-                            Menampilkan{' '}
-                            <span className="font-semibold">
-                                {categories.from || 0}
-                            </span>{' '}
-                            -{' '}
-                            <span className="font-semibold">
-                                {categories.to || 0}
-                            </span>{' '}
-                            dari{' '}
-                            <span className="font-semibold">
-                                {categories.total || 0}
-                            </span>{' '}
-                            hasil
+
+                        {/* [BARU] Dropdown Per Page */}
+                        <div className="flex items-center gap-2">
+                            <Select
+                                value={perPage}
+                                onValueChange={handlePerPageChange}
+                            >
+                                <SelectTrigger className="w-[80px] shrink-0 bg-white sm:w-[100px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent align="end">
+                                    <SelectItem value="5">5 Data</SelectItem>
+                                    <SelectItem value="10">10 Data</SelectItem>
+                                    <SelectItem value="20">20 Data</SelectItem>
+                                    <SelectItem value="50">50 Data</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <Pagination>
-                            <PaginationContent>
-                                {categories.links.map((link, index) =>
-                                    link.label.includes('Previous') ? (
-                                        <PaginationPrevious
-                                            key={index}
+                    </div>
+
+                    {/* Tabel */}
+                    <CategoryTable
+                        categories={categories}
+                        onEdit={handleEdit}
+                        onDelete={setDeleteId}
+                    />
+                </CardContent>
+
+                {/* Pagination Footer */}
+                {categories.data.length > 0 && (
+                    <CardFooter className="border-t px-4 py-4 sm:px-6">
+                        <div className="flex w-full flex-col gap-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                            <span>
+                                Menampilkan <strong>{categories.from}</strong> -{' '}
+                                <strong>{categories.to}</strong> dari{' '}
+                                <strong>{categories.total}</strong> data
+                            </span>
+                            <div className="flex justify-center gap-1">
+                                {categories.links.map((link, i) =>
+                                    link.url ? (
+                                        <Link
+                                            key={i}
                                             href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        />
-                                    ) : link.label.includes('Next') ? (
-                                        <PaginationNext
-                                            key={index}
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        />
-                                    ) : (
-                                        <PaginationLink
-                                            key={index}
-                                            href={link.url}
-                                            isActive={link.active}
-                                            preserveScroll
                                             preserveState
                                         >
-                                            {link.label}
-                                        </PaginationLink>
+                                            <Button
+                                                variant={
+                                                    link.active
+                                                        ? 'default'
+                                                        : 'outline'
+                                                }
+                                                size="sm"
+                                                className="h-8 min-w-[2rem]"
+                                                dangerouslySetInnerHTML={{
+                                                    __html: link.label,
+                                                }}
+                                            />
+                                        </Link>
+                                    ) : (
+                                        <Button
+                                            key={i}
+                                            variant="outline"
+                                            size="sm"
+                                            disabled
+                                            className="h-8 min-w-[2rem] opacity-50"
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
+                                        />
                                     ),
                                 )}
-                            </PaginationContent>
-                        </Pagination>
+                            </div>
+                        </div>
                     </CardFooter>
                 )}
             </Card>
 
-            <AlertDialog
+            <CategoryFormDialog
+                open={isFormOpen}
+                onOpenChange={setIsFormOpen}
+                category={selectedCategory}
+            />
+            <DeleteDialog
                 open={!!deleteId}
                 onOpenChange={() => setDeleteId(null)}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Apakah Anda Yakin?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Tindakan ini akan menghapus data kategori secara
-                            permanen. Produk yang terkait mungkin akan
-                            terpengaruh.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Batal</AlertDialogCancel>
-
-                        <AlertDialogAction
-                            onClick={handleDelete}
-                            variant="destructive"
-                        >
-                            Hapus
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                onConfirm={handleDelete}
+            />
         </AppLayout>
     );
 }

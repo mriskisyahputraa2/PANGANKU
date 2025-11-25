@@ -10,8 +10,11 @@ namespace App\Repositories\Contracts;
  */
 interface CategoryRepositoryInterface
 {
-    /** Ambil semua data kategori (biasanya untuk dropdown atau list) */
-    public function getAll();
+    /** Ambil 10 data kategori */
+    public function getAll($perPage = 10, $search = null);
+
+    // Untuk Dropdown Filter
+    public function getDropdownList();
 
     /** Cari satu kategori berdasarkan ID */
     public function find($id);

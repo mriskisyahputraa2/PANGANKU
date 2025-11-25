@@ -8,9 +8,21 @@ use App\Models\ProductCategory;
 class CategoryRepository implements CategoryRepositoryInterface
 {
     // Ambil data terbaru
-    public function getAll()
+    public function getAll($perPage = 10, $search = null)
     {
-        return ProductCategory::latest()->get();
+        $query = ProductCategory::latest();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    // Ambil semua data ringkas untuk dropdown
+    public function getDropdownList()
+    {
+        return ProductCategory::orderBy('name', 'asc')->get();
     }
 
     // Cari data, error jika tidak ketemu (404)
