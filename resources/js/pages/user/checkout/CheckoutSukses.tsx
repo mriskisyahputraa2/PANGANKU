@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import PublicLayout from '@/layouts/public-layout';
 import { formatRupiah } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -19,12 +18,12 @@ interface Order {
     payment_method: string;
     delivery_type: string;
     pickup_time: string;
-    status: string; // [PENTING] Kita butuh status untuk logika tampilan
+    status: string;
     created_at: string;
 }
 
 export default function CheckoutSukses({ order }: { order: Order }) {
-    // Data Rekening (Bisa diambil dari database settings jika ada)
+    // Data Rekening
     const bankAccounts = [
         { name: 'DANA', number: '0812-3456-7890', holder: 'PanganKU' },
         { name: 'GoPay', number: '0812-3456-7890', holder: 'PanganKU' },
@@ -32,49 +31,52 @@ export default function CheckoutSukses({ order }: { order: Order }) {
 
     // --- LOGIKA KONDISIONAL ---
     const isDelivery = order.delivery_type === 'delivery';
-
-    // Cek Status Pesanan
     const isPendingPayment = order.status === 'menunggu_pembayaran';
     const isWaitingVerification = order.status === 'menunggu_verifikasi';
     const isCOD = order.payment_method === 'tunai';
 
     return (
-        <PublicLayout>
+        // Tanpa PublicLayout (Halaman Full Screen Kosong)
+        <>
             <Head title="Status Pesanan" />
 
-            <section className="flex min-h-screen items-center justify-center bg-gray-50 py-16">
-                <div className="container max-w-2xl px-4">
-                    <Card className="overflow-hidden border-t-4 border-t-primary shadow-lg">
-                        {/* --- 1. HEADER STATUS (DINAMIS) --- */}
-                        <div className="bg-white p-8 text-center">
+            <section className="relative flex min-h-screen items-center justify-center bg-gray-50 py-12">
+                {/* Background Gradient Halus */}
+                <div className="absolute top-0 left-0 -z-10 h-1/2 w-full bg-gradient-to-b from-green-50/50 to-transparent"></div>
+
+                <div className="relative z-10 container max-w-2xl px-4">
+                    {/* Kartu Utama */}
+                    <Card className="overflow-hidden border-t-4 border-t-primary shadow-2xl duration-500 animate-in fade-in zoom-in">
+                        {/* 1. HEADER STATUS */}
+                        <div className="border-b border-gray-100 bg-white p-8 text-center">
                             {isPendingPayment ? (
-                                // TAMPILAN A: BELUM BAYAR (Kuning/Oranye)
+                                // TAMPILAN: BELUM BAYAR
                                 <>
-                                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
-                                        <Clock className="h-10 w-10 text-yellow-600" />
+                                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-yellow-100 bg-yellow-50 shadow-sm">
+                                        <Clock className="h-10 w-10 animate-pulse text-yellow-600" />
                                     </div>
-                                    <h1 className="text-2xl font-bold text-gray-900">
+                                    <h1 className="mb-2 font-display text-3xl font-bold text-gray-900">
                                         Pesanan Berhasil Dibuat!
                                     </h1>
-                                    <p className="mt-2 text-gray-600">
-                                        Menunggu pembayaran untuk kode:{' '}
-                                        <span className="font-bold text-primary">
+                                    <p className="text-gray-500">
+                                        Kode Pesanan:{' '}
+                                        <span className="font-mono text-lg font-bold text-primary">
                                             {order.order_number}
                                         </span>
                                     </p>
                                 </>
                             ) : (
-                                // TAMPILAN B: SUDAH UPLOAD / COD (Hijau)
+                                // TAMPILAN: DIPROSES / SELESAI
                                 <>
-                                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+                                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-green-100 bg-green-50 shadow-sm">
                                         <CheckCircle className="h-10 w-10 text-green-600" />
                                     </div>
-                                    <h1 className="text-2xl font-bold text-gray-900">
+                                    <h1 className="mb-2 font-display text-3xl font-bold text-gray-900">
                                         Pesanan Sedang Diproses!
                                     </h1>
-                                    <p className="mt-2 text-gray-600">
+                                    <p className="text-gray-500">
                                         Kode Pesanan:{' '}
-                                        <span className="font-bold text-primary">
+                                        <span className="font-mono text-lg font-bold text-primary">
                                             {order.order_number}
                                         </span>
                                     </p>
@@ -82,30 +84,29 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                             )}
                         </div>
 
-                        <div className="bg-gray-50 px-8 py-6">
-                            {/* --- 2. LOGIKA INSTRUKSI PEMBAYARAN --- */}
-
-                            {/* KASUS A: TRANSFER TAPI BELUM UPLOAD (Tampilkan Instruksi Transfer) */}
+                        {/* 2. KONTEN UTAMA */}
+                        <div className="space-y-8 bg-gray-50/50 px-8 py-8">
+                            {/* KOTAK INSTRUKSI PEMBAYARAN */}
                             {isPendingPayment && (
-                                <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-6">
-                                    <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-yellow-800">
-                                        <Wallet className="h-5 w-5" /> Instruksi
-                                        Pembayaran
+                                <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6">
+                                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-yellow-800">
+                                        <Wallet className="h-5 w-5" />{' '}
+                                        Selesaikan Pembayaran
                                     </h3>
-                                    <p className="mb-4 text-sm text-yellow-800">
-                                        Silakan transfer sejumlah{' '}
+                                    <p className="mb-4 text-sm leading-relaxed text-yellow-800/80">
+                                        Silakan transfer senilai{' '}
                                         <strong className="text-lg text-gray-900">
                                             {formatRupiah(order.total_amount)}
                                         </strong>{' '}
-                                        ke salah satu rekening di bawah ini{' '}
-                                        <strong>dalam 30 menit</strong>:
+                                        ke salah satu rekening berikut dalam
+                                        waktu <strong>30 menit</strong>:
                                     </p>
 
-                                    <div className="space-y-3 rounded-lg border border-yellow-100 bg-white p-4">
+                                    <div className="space-y-3 rounded-xl border border-yellow-100 bg-white p-4 shadow-sm">
                                         {bankAccounts.map((bank, idx) => (
                                             <div
                                                 key={idx}
-                                                className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
+                                                className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0"
                                             >
                                                 <div>
                                                     <p className="font-bold text-gray-800">
@@ -116,7 +117,7 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-mono font-bold text-gray-900">
+                                                    <p className="font-mono text-lg font-bold text-gray-900">
                                                         {bank.number}
                                                     </p>
                                                 </div>
@@ -124,91 +125,93 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                                         ))}
                                     </div>
 
-                                    <div className="mt-4 flex gap-2 text-xs text-yellow-700">
-                                        <Clock className="h-4 w-4 shrink-0" />
+                                    <div className="mt-4 flex gap-2 rounded-lg bg-yellow-100/50 p-2 text-xs text-yellow-700">
+                                        <Clock className="mt-0.5 h-4 w-4 shrink-0" />
                                         <p>
-                                            Mohon segera upload bukti pembayaran
-                                            di halaman Detail Pesanan agar
-                                            pesanan tidak dibatalkan otomatis.
+                                            Jangan lupa upload bukti pembayaran
+                                            di halaman Detail Pesanan agar tidak
+                                            dibatalkan otomatis.
                                         </p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* KASUS B: SUDAH UPLOAD BUKTI (Tampilkan Info Verifikasi) */}
+                            {/* KOTAK INFO LAINNYA (Verifikasi / COD) */}
                             {isWaitingVerification && !isCOD && (
-                                <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-6">
-                                    <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                                        <FileCheck className="h-5 w-5" /> Bukti
-                                        Diterima
+                                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
+                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                        <FileCheck className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-2 text-lg font-bold text-blue-900">
+                                        Bukti Pembayaran Diterima
                                     </h3>
-                                    <p className="text-sm text-blue-800">
-                                        Terima kasih! Bukti pembayaran Anda
-                                        sudah kami terima. Admin kami akan
-                                        segera memverifikasi pesanan Anda. Tidak
-                                        perlu tindakan lebih lanjut.
+                                    <p className="text-sm leading-relaxed text-blue-700">
+                                        Terima kasih! Admin kami sedang
+                                        memverifikasi bukti pembayaran Anda.
+                                        Mohon tunggu sebentar.
                                     </p>
                                 </div>
                             )}
 
-                            {/* KASUS C: COD (Tampilkan Info Siapkan Uang) */}
                             {isCOD && (
-                                <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-6">
-                                    <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-green-800">
-                                        <Wallet className="h-5 w-5" /> Metode
-                                        Tunai (COD)
+                                <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
+                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+                                        <Wallet className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-2 text-lg font-bold text-green-900">
+                                        Metode Bayar di Tempat (COD)
                                     </h3>
-                                    <p className="text-sm text-green-800">
-                                        Pesanan telah dikonfirmasi. Mohon
-                                        siapkan uang tunai pas sebesar{' '}
+                                    <p className="text-sm leading-relaxed text-green-700">
+                                        Pesanan dikonfirmasi. Siapkan uang tunai
+                                        pas sebesar{' '}
                                         <strong>
                                             {formatRupiah(order.total_amount)}
                                         </strong>{' '}
-                                        saat menerima pesanan.
+                                        saat kurir tiba.
                                     </p>
                                 </div>
                             )}
 
-                            {/* --- 3. INFORMASI PENGAMBILAN/PENGIRIMAN (TETAP ADA) --- */}
-                            <div className="rounded-xl border border-gray-200 bg-white p-6">
-                                <h3 className="mb-3 text-sm font-bold tracking-wide text-gray-500 uppercase">
-                                    Informasi Pengiriman
+                            {/* KOTAK PENGIRIMAN */}
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+                                <h3 className="mb-4 text-xs font-bold tracking-wider text-gray-400 uppercase">
+                                    Info Pengiriman
                                 </h3>
 
                                 {isDelivery ? (
                                     <div className="flex items-start gap-4">
-                                        <div className="rounded-full bg-primary/10 p-2">
-                                            <Truck className="h-6 w-6 text-primary" />
+                                        <div className="rounded-full bg-primary/10 p-3 text-primary">
+                                            <Truck className="h-6 w-6" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-900">
+                                            <p className="text-base font-bold text-gray-900">
                                                 Pesanan Akan Diantar
                                             </p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="mt-1 text-sm text-gray-500">
                                                 Kurir akan menghubungi Anda
                                                 sekitar pukul{' '}
-                                                <strong>
+                                                <span className="font-semibold text-gray-900">
                                                     {order.pickup_time}
-                                                </strong>
+                                                </span>
                                                 .
                                             </p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-4">
-                                        <div className="rounded-full bg-primary/10 p-2">
-                                            <MapPin className="h-6 w-6 text-primary" />
+                                        <div className="rounded-full bg-primary/10 p-3 text-primary">
+                                            <MapPin className="h-6 w-6" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-900">
+                                            <p className="text-base font-bold text-gray-900">
                                                 Ambil Sendiri di Toko
                                             </p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="mt-1 text-sm text-gray-500">
                                                 Silakan datang ke toko kami pada
                                                 pukul{' '}
-                                                <strong>
+                                                <span className="font-semibold text-gray-900">
                                                     {order.pickup_time}
-                                                </strong>
+                                                </span>
                                                 .
                                             </p>
                                         </div>
@@ -216,13 +219,13 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                                 )}
                             </div>
 
-                            {/* --- 4. TOMBOL AKSI --- */}
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                            {/* TOMBOL AKSI */}
+                            <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                                 <Link
                                     href={`/orders/${order.id}`}
                                     className="w-full"
                                 >
-                                    <Button className="w-full py-6 text-base shadow-sm">
+                                    <Button className="h-14 w-full text-base font-bold shadow-lg shadow-primary/20 transition-all hover:shadow-xl">
                                         {isPendingPayment
                                             ? 'Upload Bukti Sekarang'
                                             : 'Lihat Detail Pesanan'}
@@ -231,7 +234,7 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                                 <Link href="/products" className="w-full">
                                     <Button
                                         variant="outline"
-                                        className="w-full py-6 text-base"
+                                        className="h-14 w-full border-gray-200 bg-white text-base font-bold hover:bg-gray-50"
                                     >
                                         Kembali Belanja
                                     </Button>
@@ -239,8 +242,12 @@ export default function CheckoutSukses({ order }: { order: Order }) {
                             </div>
                         </div>
                     </Card>
+
+                    <p className="mt-8 text-center text-xs text-gray-400">
+                        &copy; 2025 PanganKU. Terima kasih telah berbelanja.
+                    </p>
                 </div>
             </section>
-        </PublicLayout>
+        </>
     );
 }

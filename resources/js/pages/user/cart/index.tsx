@@ -57,29 +57,40 @@ export default function CartIndex({ cart, total }) {
     // State Kosong
     if (!cart || cart.items.length === 0) {
         return (
-            <PublicLayout>
+            // [FIX 1] Header Transparan
+            <PublicLayout transparentHeader={true}>
                 <Head title="Keranjang Belanja" />
-                <CartEmpty />
+
+                {/* [FIX 2] Padding Atas agar tidak tertutup header */}
+                <div className="pt-32 lg:pt-40">
+                    <CartEmpty />
+                </div>
             </PublicLayout>
         );
     }
 
     return (
-        <PublicLayout>
+        // [FIX 1] Header Transparan
+        <PublicLayout transparentHeader={true}>
             <Head title="Keranjang Belanja" />
 
-            <section className="min-h-screen bg-gray-50 py-8 pb-32 lg:py-12 lg:pb-12">
+            {/* [FIX 2] Padding Atas (pt-32) & Background Relative */}
+            <section className="relative min-h-screen bg-gray-50 py-8 pt-32 pb-32 lg:py-12 lg:pt-40 lg:pb-12">
+                {/* [FIX 3] Dekorasi Background Gradient Halus */}
+                <div className="absolute top-0 left-0 -z-10 h-80 w-full bg-gradient-to-b from-white to-gray-50"></div>
+
                 <div className="container mx-auto max-w-6xl px-4">
-                    {/* Header */}
-                    <h1 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-900 lg:text-2xl">
-                        <ShoppingCart className="h-6 w-6" /> Keranjang Belanja
-                        <span className="text-sm font-normal text-muted-foreground lg:text-base">
+                    {/* Header dengan Font Display */}
+                    <h1 className="mb-6 flex items-center gap-2 font-display text-2xl font-bold text-gray-900 md:text-3xl">
+                        <ShoppingCart className="h-8 w-8 text-primary" />
+                        Keranjang Belanja
+                        <span className="ml-2 font-sans text-sm font-normal text-muted-foreground">
                             ({cart.items.length} Item)
                         </span>
                     </h1>
 
                     {/* Grid Layout */}
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
                         {/* List Item (Kiri) */}
                         <div className="space-y-4 lg:col-span-2">
                             {cart.items.map((item) => (
@@ -120,7 +131,7 @@ export default function CartIndex({ cart, total }) {
                         <AlertDialogCancel>Batal</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-red-600 text-white hover:bg-red-700"
                         >
                             Ya, Hapus
                         </AlertDialogAction>

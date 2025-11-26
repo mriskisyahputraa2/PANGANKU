@@ -1,3 +1,13 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +44,6 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 // --- LOGO COMPONENTS (SVG) ---
-
 const LogoDana = () => (
     <svg
         viewBox="0 0 248 74"
@@ -49,7 +58,6 @@ const LogoDana = () => (
         />
     </svg>
 );
-
 const LogoGopay = () => (
     <svg
         viewBox="0 0 256 74"
@@ -65,8 +73,7 @@ const LogoGopay = () => (
     </svg>
 );
 
-// --- HELPER COMPONENTS ---
-
+// --- HELPERS ---
 const formatTimeAMPM = (timeString: string) => {
     if (!timeString) return '-';
     const [hours, minutes] = timeString.split(':');
@@ -102,7 +109,7 @@ const PaymentTimer = ({ createdTimestamp }: { createdTimestamp: number }) => {
     const [isExpired, setIsExpired] = useState(false);
 
     useEffect(() => {
-        const deadline = createdTimestamp + 30 * 60 * 1000; // 30 Menit
+        const deadline = createdTimestamp + 30 * 60 * 1000;
         const interval = setInterval(() => {
             const now = new Date().getTime();
             const distance = deadline - now;
@@ -188,8 +195,6 @@ const OrderTracker = ({ status }: { status: string }) => {
     );
 };
 
-// --- MAIN COMPONENT ---
-
 export default function OrdersShow({ order }: { order: any }) {
     const { data, setData, post, processing, errors } = useForm({
         payment_proof: null as File | null,
@@ -197,6 +202,8 @@ export default function OrdersShow({ order }: { order: any }) {
     });
 
     const [preview, setPreview] = useState<string | null>(null);
+    const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false); // [STATE 1]
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false); // [STATE 2]
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -223,25 +230,34 @@ export default function OrdersShow({ order }: { order: any }) {
         });
     };
 
-    const handleConfirmReceive = () => {
-        if (confirm('Barang sudah diterima dengan baik?')) {
-            router.post(
-                `/orders/${order.id}/complete`,
-                {},
-                { onSuccess: () => toast.success('Pesanan selesai!') },
-            );
-        }
-    };
-    const handleCancelOrder = () => {
-        if (confirm('Batalkan pesanan? Stok akan dikembalikan.')) {
-            router.post(
-                `/orders/${order.id}/cancel`,
-                {},
-                { onSuccess: () => toast.success('Pesanan dibatalkan.') },
-            );
-        }
+    // --- ACTION HANDLERS (SEKARANG PAKAI DIALOG) ---
+    const confirmReceiveOrder = () => {
+        router.post(
+            `/orders/${order.id}/complete`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Pesanan selesai! Terima kasih.');
+                    setConfirmCompleteOpen(false);
+                },
+            },
+        );
     };
 
+    const confirmCancelOrder = () => {
+        router.post(
+            `/orders/${order.id}/cancel`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Pesanan dibatalkan.');
+                    setConfirmCancelOpen(false);
+                },
+            },
+        );
+    };
+
+    // Logic Status
     const isWaitingPayment = order.status === 'menunggu_pembayaran';
     const isTransfer = ['gopay', 'dana'].includes(order.payment_method);
     const isDelivery = order.delivery_type === 'delivery';
@@ -254,11 +270,14 @@ export default function OrdersShow({ order }: { order: any }) {
             : { name: 'GoPay', number: '0812-3456-7890', holder: 'PanganKU' };
 
     return (
-        <PublicLayout>
+        <PublicLayout transparentHeader={true}>
             <Head title={`Order #${order.order_number}`} />
-            <div className="min-h-screen bg-gray-50/50 pt-8 pb-20">
+
+            <section className="relative min-h-screen bg-gray-50 py-12 pt-32 lg:pt-40">
+                <div className="absolute top-0 left-0 -z-10 h-80 w-full bg-gradient-to-b from-white to-gray-50"></div>
+
                 <div className="container mx-auto max-w-5xl px-4">
-                    {/* HEADER & TRACKER */}
+                    {/* HEADER */}
                     <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <Link
                             href="/orders"
@@ -287,7 +306,7 @@ export default function OrdersShow({ order }: { order: any }) {
                         <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                             <div className="mb-6 flex flex-col justify-between gap-4 border-b border-gray-50 pb-4 sm:flex-row sm:items-center">
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-900">
+                                    <h1 className="font-display text-2xl font-bold text-gray-900">
                                         Status Pesanan
                                     </h1>
                                     <p className="text-sm text-gray-500">
@@ -402,7 +421,7 @@ export default function OrdersShow({ order }: { order: any }) {
                                 </div>
                             </Card>
 
-                            {/* UPLOAD BUKTI + ICON BARU */}
+                            {/* KONFIRMASI PEMBAYARAN */}
                             {isWaitingPayment && isTransfer && (
                                 <Card className="border-primary/20 shadow-md ring-1 ring-primary/10">
                                     <CardHeader className="pb-3">
@@ -418,7 +437,6 @@ export default function OrdersShow({ order }: { order: any }) {
                                             </p>
                                             <div className="flex items-center justify-between rounded border border-yellow-200 bg-white p-3 shadow-sm">
                                                 <div className="flex items-center gap-3">
-                                                    {/* GANTI DIV BIASA DENGAN KOMPONEN LOGO */}
                                                     <div className="flex h-10 w-16 items-center justify-center overflow-hidden rounded">
                                                         {order.payment_method ===
                                                         'dana' ? (
@@ -448,7 +466,6 @@ export default function OrdersShow({ order }: { order: any }) {
                                                 hingga 3 digit terakhir.
                                             </p>
                                         </div>
-
                                         <form
                                             onSubmit={handleUploadProof}
                                             className="space-y-4"
@@ -457,7 +474,6 @@ export default function OrdersShow({ order }: { order: any }) {
                                                 <Label>
                                                     Upload Struk / Screenshot
                                                 </Label>
-
                                                 {!preview ? (
                                                     <Label
                                                         htmlFor="proof-upload"
@@ -526,14 +542,12 @@ export default function OrdersShow({ order }: { order: any }) {
                                                         </div>
                                                     </div>
                                                 )}
-
                                                 {errors.payment_proof && (
                                                     <p className="text-xs text-red-500">
                                                         {errors.payment_proof}
                                                     </p>
                                                 )}
                                             </div>
-
                                             <Button
                                                 type="submit"
                                                 className="w-full py-6 text-base font-bold shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30"
@@ -548,9 +562,13 @@ export default function OrdersShow({ order }: { order: any }) {
                                             </Button>
                                         </form>
                                     </CardContent>
+
+                                    {/* TOMBOL BATAL (MEMBUKA DIALOG) */}
                                     <CardFooter className="justify-center border-t bg-gray-50 py-3">
                                         <button
-                                            onClick={handleCancelOrder}
+                                            onClick={() =>
+                                                setConfirmCancelOpen(true)
+                                            }
                                             className="text-xs font-medium text-red-500 hover:underline"
                                         >
                                             Batalkan Pesanan
@@ -559,6 +577,7 @@ export default function OrdersShow({ order }: { order: any }) {
                                 </Card>
                             )}
 
+                            {/* KONFIRMASI TERIMA (MEMBUKA DIALOG) */}
                             {(isShipped || isReadyPickup) && (
                                 <Card className="border-green-200 bg-green-50/50 shadow-sm">
                                     <CardContent className="p-6 text-center">
@@ -575,8 +594,11 @@ export default function OrdersShow({ order }: { order: any }) {
                                                 ? 'Jika paket sudah sampai dan kondisinya baik, silakan selesaikan pesanan.'
                                                 : 'Silakan datang ke toko kami. Tunjukkan Kode Order kepada kasir.'}
                                         </p>
+
                                         <Button
-                                            onClick={handleConfirmReceive}
+                                            onClick={() =>
+                                                setConfirmCompleteOpen(true)
+                                            }
                                             className="w-full bg-green-600 py-6 font-bold text-white shadow-lg shadow-green-200 hover:bg-green-700"
                                         >
                                             Konfirmasi Barang Diterima
@@ -586,6 +608,7 @@ export default function OrdersShow({ order }: { order: any }) {
                             )}
                         </div>
 
+                        {/* SIDEBAR KANAN */}
                         <div className="space-y-6">
                             <Card>
                                 <CardHeader>
@@ -703,7 +726,62 @@ export default function OrdersShow({ order }: { order: any }) {
                         </div>
                     </div>
                 </div>
-            </div>
+
+                {/* --- DIALOG: KONFIRMASI SELESAI --- */}
+                <AlertDialog
+                    open={confirmCompleteOpen}
+                    onOpenChange={setConfirmCompleteOpen}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                Pesanan Sudah Diterima?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Pastikan Anda sudah menerima barang dengan
+                                kondisi baik. Tindakan ini akan menyelesaikan
+                                pesanan secara permanen.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Belum</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmReceiveOrder}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                Ya, Saya Terima
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* --- DIALOG: KONFIRMASI BATAL --- */}
+                <AlertDialog
+                    open={confirmCancelOpen}
+                    onOpenChange={setConfirmCancelOpen}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                Batalkan Pesanan?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Anda yakin ingin membatalkan pesanan ini? Stok
+                                produk akan dikembalikan ke toko.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Tidak</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmCancelOrder}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                Ya, Batalkan
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </section>
         </PublicLayout>
     );
 }
