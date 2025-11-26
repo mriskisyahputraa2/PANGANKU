@@ -4,9 +4,9 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     Carousel,
     CarouselContent,
@@ -16,352 +16,426 @@ import {
 } from '@/components/ui/carousel';
 import PublicLayout from '@/layouts/public-layout';
 import { formatRupiah } from '@/lib/utils';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import Autoplay from 'embla-carousel-autoplay';
 import { motion } from 'framer-motion';
 import {
     ArrowRight,
-    CheckCircle,
+    Clock,
     Leaf,
     MessageSquareQuote,
     Plus,
     ShieldCheck,
+    ShoppingCart,
     Star,
     Truck,
-    Users,
+    Zap,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
-// Ganti path ini agar sesuai dengan lokasi gambar Anda
-import heroImage2 from '~/assets/images/pexels-damir-26596092.jpg';
-import heroImage from '~/assets/images/pexels-davegarcia-32840078.jpg';
-import heroImage3 from '~/assets/images/pexels-gamerxtc-17064389.jpg';
-
-// Menggunakan placeholder sementara
-// const heroImage = '/images/placeholder/hero-meat.jpg';
-// const heroImage2 = '/images/placeholder/about-us.jpg';
-// const heroImage3 = '/images/placeholder/default-product.png';
-
-// Gambar placeholder (tidak berubah)
-const aboutImage = '/images/placeholder/about-us.jpg';
+// --- DATA DUMMY ---
 const defaultProductImage = '/images/placeholder/default-product.png';
-const avatar1 = '/images/placeholder/avatar-1.jpg';
-const avatar2 = '/images/placeholder/avatar-2.jpg';
-const avatar3 = '/images/placeholder/avatar-3.jpg';
 
-// Konfigurasi animasi (tidak berubah)
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } },
-};
-
-// Data statis (tidak berubah)
-const faqs = [
+const categories = [
     {
-        q: 'Apakah produk di PanganKU dijamin Halal?',
-        a: 'Ya, semua produk daging dan ayam kami berasal dari rumah potong hewan bersertifikat Halal MUI dan diproses secara higienis sesuai syariat.',
+        name: 'Ayam Utuh',
+        icon: '🐓',
+        href: '/products?search=utuh',
+        color: 'bg-orange-100 text-orange-600',
     },
     {
-        q: 'Bagaimana cara memesan produk?',
-        a: 'Anda bisa mendaftar/login, pilih produk yang diinginkan dari katalog kami, masukkan ke keranjang, lalu lanjutkan ke proses checkout untuk memilih metode pembayaran dan pengiriman.',
+        name: 'Filet Dada',
+        icon: '🥩',
+        href: '/products?search=dada',
+        color: 'bg-red-100 text-red-600',
     },
     {
-        q: 'Area mana saja yang dijangkau pengiriman?',
-        a: 'Saat ini kami melayani pengiriman untuk seluruh area Kota Lhokseumawe. Estimasi waktu pengiriman akan ditampilkan saat checkout.',
+        name: 'Paha Bawah',
+        icon: '🍗',
+        href: '/products?search=paha',
+        color: 'bg-yellow-100 text-yellow-600',
     },
     {
-        q: 'Bagaimana jika produk yang diterima tidak sesuai?',
-        a: 'Kami memberikan jaminan kualitas. Jika produk yang Anda terima rusak atau tidak sesuai, silakan hubungi customer service kami maksimal 1x24 jam setelah penerimaan barang untuk proses penggantian atau refund.',
+        name: 'Sayap',
+        icon: '🦅',
+        href: '/products?search=sayap',
+        color: 'bg-blue-100 text-blue-600',
+    },
+    {
+        name: 'Jeroan',
+        icon: '🥣',
+        href: '/products?search=jeroan',
+        color: 'bg-green-100 text-green-600',
+    },
+    {
+        name: 'Olahan',
+        icon: '🍱',
+        href: '/products?search=olahan',
+        color: 'bg-purple-100 text-purple-600',
     },
 ];
 
 const testimonials = [
     {
-        name: 'Ibu Rina - Lhokseumawe',
-        role: 'Pelanggan Setia',
-        quote: 'Daging sapi di PanganKU selalu segar dan kualitasnya premium. Pengirimannya juga cepat, sangat membantu untuk stok masakan di rumah.',
-        avatar: avatar1,
+        name: 'Ibu Rina',
+        role: 'Ibu Rumah Tangga',
+        quote: 'Ayamnya benar-benar segar, beda banget sama yang di pasar biasa. Pengiriman cepat!',
+        rating: 5,
     },
     {
-        name: 'Chef Budi - Restoran Aroma',
-        role: 'Mitra Bisnis',
-        quote: 'Sebagai chef, kualitas bahan baku adalah segalanya. PanganKU konsisten memberikan daging dengan potongan yang presisi dan kualitas terbaik.',
-        avatar: avatar2,
+        name: 'Pak Budi',
+        role: 'Pemilik Katering',
+        quote: 'Potongannya rapi, timbangannya pas. PanganKU jadi andalan katering saya.',
+        rating: 5,
     },
     {
-        name: 'Bapak Ahmad - Kuta Blang',
-        role: 'Pelanggan Baru',
-        quote: 'Baru pertama kali coba pesan ayam kampung di sini, ternyata benar-benar fresh dan rasanya beda. Pasti pesan lagi!',
-        avatar: avatar3,
+        name: 'Chef Junaidi',
+        role: 'Head Chef',
+        quote: 'Teksturnya juicy dan tidak berbau. Sangat direkomendasikan untuk resto.',
+        rating: 5,
+    },
+    {
+        name: 'Kak Sarah',
+        role: 'Anak Kos',
+        quote: 'Praktis banget buat stok di kulkas. Kemasannya rapi dan bersih.',
+        rating: 4,
     },
 ];
 
-// Helper inisial (tidak berubah)
-const getInitials = (name: string) => {
-    if (!name) return '??';
-    const names = name.split(' ');
-    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+const faqs = [
+    {
+        q: 'Apakah ayam di PanganKU Halal?',
+        a: 'Ya, 100% Halal. Ayam kami dipotong dengan syariat Islam di RPH bersertifikat MUI.',
+    },
+    {
+        q: 'Berapa lama pengiriman?',
+        a: 'Pesan sebelum jam 10 pagi, dikirim hari yang sama. Selebihnya dikirim esok pagi.',
+    },
+    {
+        q: 'Bagaimana jika ayam rusak?',
+        a: 'Garansi Ganti Baru! Cukup kirim foto/video saat unboxing ke WA Admin.',
+    },
+];
+
+// --- VARIAN ANIMASI ---
+const fadeUp = {
+    hidden: { opacity: 0, y: 40 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: 'easeOut' },
+    },
 };
 
-// Menerima props 'featuredProducts' dari controller
-export default function Homepage({ featuredProducts = [] }) {
-    return (
-        <PublicLayout>
-            <Head title="Beranda - PanganKU Kualitas Premium" />
+const fadeLeft = {
+    hidden: { opacity: 0, x: -50 },
+    visible: {
+        opacity: 1,
+        x: 0,
+        transition: { duration: 0.6, ease: 'easeOut' },
+    },
+};
+const fadeRight = {
+    hidden: { opacity: 0, x: 50 },
+    visible: {
+        opacity: 1,
+        x: 0,
+        transition: { duration: 0.6, ease: 'easeOut' },
+    },
+};
 
-            {/* 1. Hero Section (PUTIH - bg-card) */}
-            <section className="relative overflow-hidden bg-card pt-40 pb-32">
+const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+    },
+};
+
+const popUp = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: {
+        scale: 1,
+        opacity: 1,
+        transition: { type: 'spring', bounce: 0.4 },
+    },
+};
+
+export default function Homepage({ featuredProducts = [] }) {
+    const handleAddToCart = (productId: number) => {
+        router.post(
+            '/cart/add',
+            { product_id: productId, quantity: 1 },
+            {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Berhasil masuk keranjang!'),
+            },
+        );
+    };
+
+    return (
+        <PublicLayout transparentHeader={true}>
+            <Head title="PanganKU - Ayam Segar Langsung dari Peternakan" />
+
+            {/* ===================================================================================== */}
+            {/* 1. HERO SECTION */}
+            {/* ===================================================================================== */}
+            <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-50"></div>
+                <div className="absolute right-0 bottom-0 left-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
+
                 <div className="relative z-10 container mx-auto max-w-7xl px-6">
-                    <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-                        {/* Kolom Teks */}
+                    <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
+                        {/* KIRI */}
                         <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="text-center lg:text-left"
+                            className="text-center lg:col-span-7 lg:text-left"
+                            initial="hidden"
+                            animate="visible"
+                            variants={staggerContainer}
                         >
-                            <h1 className="text-5xl font-extrabold tracking-tight text-foreground md:text-6xl">
-                                Kualitas Premium,{' '}
-                                <span className="text-primary">
-                                    Kesegaran Terjamin.
+                            <motion.div variants={fadeUp}>
+                                <Badge className="mb-6 border-orange-100 bg-orange-50 px-4 py-1.5 text-sm text-orange-600 shadow-sm hover:bg-orange-100">
+                                    <Zap className="mr-1.5 h-3.5 w-3.5 animate-pulse fill-orange-500 text-orange-500" />
+                                    Pengiriman Tercepat se-Lhokseumawe
+                                </Badge>
+                            </motion.div>
+
+                            {/* [FONT DISPLAY] */}
+                            <motion.h1
+                                variants={fadeUp}
+                                className="mb-6 font-display text-5xl leading-[1.1] font-bold tracking-tight text-gray-900 md:text-7xl"
+                            >
+                                Ayam Segar, <br className="hidden md:block" />
+                                <span className="bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent">
+                                    Sehat & Halal.
                                 </span>
-                            </h1>
-                            <p className="mt-4 max-w-2xl text-xl text-muted-foreground lg:text-2xl">
-                                Rasakan kesegaran ayam alami tanpa bahan
-                                pengawet, siap olah untuk hidangan sehat
-                                keluarga setiap hari.
-                            </p>
-                            <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
-                                <Link
-                                    href="/products"
-                                    className="shine-effect inline-block rounded-lg bg-primary px-8 py-3 text-center font-bold text-primary-foreground transition duration-300 hover:bg-primary/90 hover:shadow-lg"
-                                >
-                                    Belanja Sekarang
+                            </motion.h1>
+
+                            <motion.p
+                                variants={fadeUp}
+                                className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-gray-600 lg:mx-0"
+                            >
+                                Langsung dari peternakan pilihan ke dapur Anda.
+                                Tanpa pengawet, dipotong subuh, dikirim pagi.
+                                Jaminan kualitas terbaik untuk keluarga.
+                            </motion.p>
+
+                            <motion.div
+                                variants={fadeUp}
+                                className="mb-12 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
+                            >
+                                <Link href="/products">
+                                    <Button
+                                        size="lg"
+                                        className="h-14 w-full rounded-full bg-primary px-10 text-lg font-bold text-white shadow-xl shadow-primary/25 transition-transform hover:scale-105 hover:bg-primary/90 sm:w-auto"
+                                    >
+                                        <ShoppingCart className="mr-2 h-5 w-5" />{' '}
+                                        Belanja Sekarang
+                                    </Button>
                                 </Link>
-                                <Link
-                                    href="/categories"
-                                    className="inline-block rounded-lg border-2 border-primary px-8 py-3 text-center font-bold text-primary transition duration-300 hover:bg-primary hover:text-primary-foreground"
-                                >
-                                    Lihat Kategori
+                                <Link href="#faq">
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="h-14 w-full rounded-full border-2 px-10 text-lg font-bold text-gray-600 hover:border-primary/30 hover:bg-gray-50 hover:text-primary sm:w-auto"
+                                    >
+                                        Pelajari Dulu
+                                    </Button>
                                 </Link>
-                            </div>
+                            </motion.div>
+
+                            {/* Kategori - TAMPIL SEMUA */}
+                            <motion.div
+                                variants={fadeUp}
+                                className="border-t border-gray-100 pt-8"
+                            >
+                                <p className="mb-4 text-xs font-bold tracking-widest text-gray-400 uppercase">
+                                    Kategori Populer
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
+                                    {categories.map((cat, idx) => (
+                                        <Link
+                                            key={idx}
+                                            href={cat.href}
+                                            className="group flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 transition-all duration-300 hover:border-primary hover:shadow-md"
+                                        >
+                                            <span className="text-lg">
+                                                {cat.icon}
+                                            </span>
+                                            <span className="text-sm font-semibold text-gray-700 group-hover:text-primary">
+                                                {cat.name}
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </motion.div>
                         </motion.div>
 
-                        {/* Kolom Gambar Carousel */}
+                        {/* KANAN: Gambar Floating */}
                         <motion.div
-                            initial={{ opacity: 0, x: 50 }}
+                            className="relative hidden lg:col-span-5 lg:block"
+                            initial={{ opacity: 0, x: 100 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className="hidden lg:block"
                         >
-                            <Carousel
-                                className="w-full"
-                                plugins={[
-                                    Autoplay({
-                                        delay: 3000,
-                                    }),
-                                ]}
+                            <motion.div
+                                animate={{ y: [0, -15, 0] }}
+                                transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    ease: 'easeInOut',
+                                }}
+                                className="relative overflow-hidden rounded-[2.5rem] border-[8px] border-white bg-white shadow-2xl"
                             >
-                                <CarouselContent>
-                                    <CarouselItem>
-                                        <img
-                                            src={heroImage}
-                                            alt="Ayam Segar PanganKU 1"
-                                            className="h-auto w-full rounded-2xl object-cover shadow-xl"
-                                            style={{ maxHeight: '400px' }}
-                                        />
-                                    </CarouselItem>
-                                    <CarouselItem>
-                                        <img
-                                            src={heroImage2}
-                                            alt="Ayam Segar PanganKU 2"
-                                            className="h-auto w-full rounded-2xl object-cover shadow-xl"
-                                            style={{ maxHeight: '400px' }}
-                                        />
-                                    </CarouselItem>
-                                    <CarouselItem>
-                                        <img
-                                            src={heroImage3}
-                                            alt="Ayam Segar PanganKU 3"
-                                            className="h-auto w-full rounded-2xl object-cover shadow-xl"
-                                            style={{ maxHeight: '400px' }}
-                                        />
-                                    </CarouselItem>
-                                </CarouselContent>
-                                <CarouselPrevious />
-                                <CarouselNext />
-                            </Carousel>
+                                <img
+                                    src="https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=1974&auto=format&fit=crop"
+                                    alt="Ayam Segar"
+                                    className="h-auto w-full object-cover"
+                                />
+                                <div className="animate-bounce-slow absolute bottom-6 left-6 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white/90 p-3 pr-6 shadow-lg backdrop-blur-md">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-xl font-bold text-green-600">
+                                        <Leaf className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase">
+                                            Kualitas
+                                        </p>
+                                        <p className="font-display text-lg font-bold text-gray-900">
+                                            Grade A+
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            <div className="absolute -top-10 -right-10 -z-10 h-[400px] w-[400px] animate-pulse rounded-full bg-primary/20 blur-3xl"></div>
                         </motion.div>
                     </div>
+                </div>
+            </section>
 
-                    {/* Stats / Social Proof */}
+            {/* ===================================================================================== */}
+            {/* 2. FITUR UNGGULAN */}
+            {/* ===================================================================================== */}
+            <section className="relative bg-white py-20">
+                <div className="container mx-auto max-w-7xl px-6">
                     <motion.div
-                        variants={containerVariants}
                         initial="hidden"
-                        animate="visible"
-                        transition={{ delay: 0.5, staggerChildren: 0.2 }}
-                        className="mt-20 grid grid-cols-2 gap-8 text-center md:grid-cols-4"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: '-100px' }}
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 gap-8 md:grid-cols-3"
                     >
-                        <motion.div variants={itemVariants}>
-                            <Users className="mx-auto h-10 w-10 text-primary" />
-                            <p className="mt-2 text-2xl font-bold text-foreground">
-                                1,200+
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Pelanggan Puas
-                            </p>
-                        </motion.div>
-                        <motion.div variants={itemVariants}>
-                            <Leaf className="mx-auto h-10 w-10 text-primary" />
-                            <p className="mt-2 text-2xl font-bold text-foreground">
-                                100%
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Alami & Segar
-                            </p>
-                        </motion.div>
-                        <motion.div variants={itemVariants}>
-                            <ShieldCheck className="mx-auto h-10 w-10 text-primary" />
-                            <p className="mt-2 text-2xl font-bold text-foreground">
-                                Halal
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Tersertifikasi MUI
-                            </p>
-                        </motion.div>
-                        <motion.div variants={itemVariants}>
-                            <Star className="mx-auto h-10 w-10 text-primary" />
-                            <p className="mt-2 text-2xl font-bold text-foreground">
-                                4.9/5
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Rating Kualitas
-                            </p>
-                        </motion.div>
+                        {[
+                            {
+                                icon: ShieldCheck,
+                                color: 'blue',
+                                title: '100% Halal & Higienis',
+                                desc: 'Sertifikasi Halal MUI. Proses pemotongan sesuai syariat dan standar kebersihan tinggi.',
+                            },
+                            {
+                                icon: Clock,
+                                color: 'green',
+                                title: 'Jaminan Segar',
+                                desc: 'Ayam dipotong subuh hari, langsung dikemas dan dikirim pagi harinya. Bukan stok beku lama.',
+                            },
+                            {
+                                icon: Truck,
+                                color: 'orange',
+                                title: 'Pengiriman Cepat',
+                                desc: 'Armada kami siap mengantar pesanan Anda dengan aman dan tepat waktu.',
+                            },
+                        ].map((feature, i) => (
+                            <motion.div key={i} variants={popUp}>
+                                <Card className="group h-full border-none bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+                                    <CardContent className="p-8 text-center">
+                                        <div
+                                            className={`h-20 w-20 bg-${feature.color}-50 text-${feature.color}-600 mx-auto mb-6 flex items-center justify-center rounded-3xl transition-transform duration-300 group-hover:scale-110`}
+                                        >
+                                            <feature.icon className="h-10 w-10" />
+                                        </div>
+                                        {/* [FONT DISPLAY] */}
+                                        <h3 className="mb-3 font-display text-xl font-bold text-gray-900">
+                                            {feature.title}
+                                        </h3>
+                                        <p className="text-sm leading-relaxed text-gray-500">
+                                            {feature.desc}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
                     </motion.div>
                 </div>
             </section>
 
-            {/* 2. Seksi "Tentang Kami" (ABU SOFT - bg-background) */}
-            <section className="bg-background py-24">
-                <div className="container mx-auto max-w-7xl px-6">
-                    <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+            {/* ===================================================================================== */}
+            {/* 3. PRODUK TERLARIS (FIX FOTO & HARGA) */}
+            {/* ===================================================================================== */}
+            <section className="relative overflow-hidden bg-gray-50 py-24">
+                <div className="absolute top-0 left-0 h-full w-full bg-gradient-to-b from-white to-gray-50"></div>
+                <div className="absolute top-20 left-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl"></div>
+                <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl"></div>
+
+                <div className="relative z-10 container mx-auto max-w-7xl px-6">
+                    <div className="mb-12 flex flex-col items-end justify-between gap-4 md:flex-row">
                         <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, amount: 0.5 }}
-                            transition={{ duration: 0.6 }}
-                            className="overflow-hidden rounded-2xl border border-border shadow-lg"
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                            variants={fadeRight}
                         >
-                            <img
-                                src={heroImage}
-                                alt="Daging Segar PanganKU"
-                                className="h-full w-full object-cover"
-                            />
+                            {/* [FONT DISPLAY] */}
+                            <h2 className="font-display text-4xl font-bold text-gray-900">
+                                Produk Pilihan
+                            </h2>
+                            <p className="mt-2 text-lg text-gray-600">
+                                Favorit keluarga Indonesia minggu ini.
+                            </p>
                         </motion.div>
                         <motion.div
-                            initial={{ opacity: 0, x: 50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, amount: 0.5 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                            variants={fadeLeft}
                         >
-                            <h2 className="text-3xl font-bold text-foreground">
-                                Pilihan Terbaik untuk Dapur Anda
-                            </h2>
-                            <p className="mt-4 text-lg text-muted-foreground">
-                                Di PanganKU, kami percaya bahwa hidangan lezat
-                                berawal dari bahan baku terbaik...
-                            </p>
-                            <ul className="mt-8 space-y-6">
-                                <li className="flex items-start">
-                                    <div className="flex-shrink-0 rounded-full bg-primary/10 p-3">
-                                        <ShieldCheck className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-foreground">
-                                            100% Halal & Higienis
-                                        </h3>
-                                        <p className="mt-1 text-muted-foreground">
-                                            Proses pemotongan...
-                                        </p>
-                                    </div>
-                                </li>
-                                <li className="flex items-start">
-                                    <div className="flex-shrink-0 rounded-full bg-primary/10 p-3">
-                                        <CheckCircle className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-foreground">
-                                            Kualitas Premium
-                                        </h3>
-                                        <p className="mt-1 text-muted-foreground">
-                                            Dipilih dari sumber terbaik...
-                                        </p>
-                                    </div>
-                                </li>
-                                <li className="flex items-start">
-                                    <div className="flex-shrink-0 rounded-full bg-primary/10 p-3">
-                                        <Truck className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-foreground">
-                                            Pengiriman Cepat & Aman
-                                        </h3>
-                                        <p className="mt-1 text-muted-foreground">
-                                            Armada pendingin kami...
-                                        </p>
-                                    </div>
-                                </li>
-                            </ul>
+                            <Link href="/products">
+                                <Button
+                                    variant="ghost"
+                                    className="hidden rounded-full px-6 text-primary hover:bg-primary/10 md:flex"
+                                >
+                                    Lihat Semua{' '}
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </Link>
                         </motion.div>
                     </div>
-                </div>
-            </section>
 
-            {/* 3. Produk Unggulan (PUTIH - bg-card) */}
-            <section className="bg-card py-24">
-                <div className="container mx-auto max-w-7xl px-6 text-center">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-3xl font-bold text-foreground"
-                    >
-                        Produk Terlaris Kami
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="mx-auto mt-4 max-w-2xl text-muted-foreground"
-                    >
-                        Temukan potongan daging ayam segar...
-                    </motion.p>
                     <motion.div
-                        variants={containerVariants}
+                        variants={staggerContainer}
                         initial="hidden"
                         whileInView="visible"
-                        viewport={{ once: true, amount: 0.2 }}
-                        className="mt-12 grid grid-cols-1 place-items-start gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        viewport={{ once: true, margin: '-50px' }}
+                        className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
                     >
-                        {featuredProducts.slice(0, 3).map((product: any) => (
-                            <motion.div
-                                key={product.id}
-                                variants={itemVariants}
-                                className="group relative w-full overflow-hidden rounded-xl border border-border bg-card text-left shadow-lg transition-all duration-300 hover:shadow-2xl"
-                            >
-                                <Link href={`/products/${product.slug}`}>
-                                    <div className="relative aspect-video overflow-hidden">
+                        {featuredProducts.length > 0 ? (
+                            featuredProducts.map((product: any) => (
+                                <motion.div
+                                    key={product.id}
+                                    variants={fadeUp}
+                                    whileHover={{ y: -10 }}
+                                    className="group flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-2xl"
+                                >
+                                    <Link
+                                        href={`/products/${product.slug}`}
+                                        className="relative block aspect-square w-full overflow-hidden bg-gray-50"
+                                    >
+                                        {/* [PERBAIKAN FOTO] Pakai object-cover agar mengisi kotak persegi */}
                                         <img
                                             src={
-                                                product.image ||
-                                                defaultProductImage
+                                                product.image
+                                                    ? `/storage/${product.image}`
+                                                    : defaultProductImage
                                             }
                                             alt={product.name}
                                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -370,200 +444,209 @@ export default function Homepage({ featuredProducts = [] }) {
                                                     defaultProductImage)
                                             }
                                         />
-                                        <Badge className="absolute top-4 left-4">
-                                            {product.category}
-                                        </Badge>
-                                    </div>
-                                    <div className="p-4">
-                                        <h3 className="line-clamp-2 h-14 text-lg font-bold text-foreground group-hover:text-primary">
-                                            {product.name}
-                                        </h3>
-                                        <div className="mt-2 pt-2">
-                                            <p className="text-lg font-bold text-primary">
+
+                                        {product.stock <= 5 && (
+                                            <Badge
+                                                variant="destructive"
+                                                className="absolute top-4 left-4 z-10 rounded-full px-3 py-1 text-xs shadow-md"
+                                            >
+                                                Sisa {product.stock}
+                                            </Badge>
+                                        )}
+
+                                        <Button
+                                            size="icon"
+                                            className="absolute right-4 bottom-4 z-10 h-10 w-10 translate-y-10 rounded-full bg-white text-primary opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-primary hover:text-white"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleAddToCart(product.id);
+                                            }}
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </Button>
+                                    </Link>
+
+                                    <div className="flex flex-1 flex-col p-5">
+                                        <div className="mb-1 text-xs font-bold tracking-wider text-orange-500 uppercase">
+                                            {product.category?.name || 'Umum'}
+                                        </div>
+                                        <Link
+                                            href={`/products/${product.slug}`}
+                                            className="mb-auto"
+                                        >
+                                            {/* [FONT DISPLAY] */}
+                                            <h3 className="line-clamp-1 font-display text-lg font-bold text-gray-900 transition-colors hover:text-primary">
+                                                {product.name}
+                                            </h3>
+                                        </Link>
+
+                                        <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                                            {/* [PERBAIKAN HARGA] Hanya tampilkan harga asli, hapus harga coret */}
+                                            <span className="text-xl font-extrabold text-gray-900">
                                                 {formatRupiah(product.price)}
-                                                <span className="text-sm font-normal text-muted-foreground">
-                                                    {' '}
-                                                    / kg
-                                                </span>
-                                            </p>
+                                            </span>
                                         </div>
                                     </div>
-                                </Link>
-                                <Button
-                                    size="icon"
-                                    className="absolute right-4 bottom-4 translate-y-2 rounded-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
-                                    aria-label="Tambah ke keranjang"
-                                >
-                                    <Plus className="h-5 w-5" />
-                                </Button>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="col-span-full rounded-3xl border-2 border-dashed bg-white/50 py-20 text-center text-gray-400">
+                                Belum ada produk unggulan.
+                            </div>
+                        )}
                     </motion.div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                        className="mt-12"
-                    >
+                    <div className="mt-8 text-center md:hidden">
                         <Link href="/products">
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                            >
-                                Lihat Semua Produk{' '}
-                                <ArrowRight className="ml-2 h-5 w-5" />
+                            <Button className="w-full rounded-full">
+                                Lihat Semua Produk
                             </Button>
                         </Link>
-                    </motion.div>
+                    </div>
                 </div>
             </section>
 
-            {/* 4. Seksi Testimoni (ABU SOFT - bg-background) */}
-            <section className="bg-background py-24">
-                <div className="container mx-auto max-w-7xl px-6 text-center">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-3xl font-bold text-foreground"
-                    >
-                        Apa Kata Pelanggan Kami?
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="mx-auto mt-4 max-w-2xl text-muted-foreground"
-                    >
-                        Pengalaman nyata dari mereka...
-                    </motion.p>
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, amount: 0.3 }}
-                        className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3"
-                    >
-                        {testimonials.map((testimonial, index) => (
-                            <motion.div
-                                key={index}
-                                variants={itemVariants}
-                                className="flex h-full flex-col rounded-xl border border-border bg-card p-8 text-left shadow-sm" // Kartu Putih
-                            >
-                                <MessageSquareQuote className="h-8 w-8 text-primary" />
-                                <p className="mt-4 flex-1 text-muted-foreground italic">
-                                    "{testimonial.quote}"
-                                </p>
-                                <div className="mt-6 flex items-center gap-4 border-t border-border pt-6">
-                                    <Avatar className="h-12 w-12">
-                                        <AvatarImage
-                                            src={testimonial.avatar}
-                                            alt={testimonial.name}
-                                        />
-                                        <AvatarFallback>
-                                            {getInitials(testimonial.name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-bold text-foreground">
-                                            {testimonial.name}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {testimonial.role}
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* 5. Seksi FAQ (PUTIH - bg-card) */}
-            <section className="bg-card py-24">
-                <div className="container mx-auto max-w-4xl px-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-center"
-                    >
-                        <h2 className="text-3xl font-bold text-foreground">
-                            Pertanyaan Umum (FAQ)
+            {/* ===================================================================================== */}
+            {/* 4. TESTIMONI */}
+            {/* ===================================================================================== */}
+            <section className="overflow-hidden border-t border-gray-100 bg-white py-24">
+                <div className="container mx-auto max-w-7xl px-6">
+                    <div className="mb-16 text-center">
+                        <Badge
+                            variant="outline"
+                            className="mb-4 rounded-full border-primary bg-primary/5 px-4 py-1 text-primary"
+                        >
+                            Kata Mereka
+                        </Badge>
+                        {/* [FONT DISPLAY] */}
+                        <h2 className="font-display text-4xl font-bold text-gray-900">
+                            Cerita Pelanggan Setia
                         </h2>
-                        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-                            Temukan jawaban cepat untuk pertanyaan Anda tentang
-                            PanganKU.
-                        </p>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="mt-12"
-                    >
+                    </div>
+
+                    <div className="mx-auto max-w-6xl">
+                        <Carousel
+                            plugins={[Autoplay({ delay: 4000 })]}
+                            className="w-full"
+                        >
+                            <CarouselContent>
+                                {testimonials.map((testi, index) => (
+                                    <CarouselItem
+                                        key={index}
+                                        className="p-4 md:basis-1/2 lg:basis-1/3"
+                                    >
+                                        <div className="relative h-full rounded-[2rem] bg-gray-50 p-8 transition-colors duration-300 hover:bg-primary/5">
+                                            <MessageSquareQuote className="absolute top-6 right-6 h-12 w-12 rotate-12 text-gray-200" />
+                                            <div className="mb-6 flex gap-1 text-yellow-400">
+                                                {[...Array(testi.rating)].map(
+                                                    (_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            className="h-5 w-5 fill-current"
+                                                        />
+                                                    ),
+                                                )}
+                                            </div>
+                                            <p className="mb-8 text-lg leading-relaxed text-gray-700 italic">
+                                                "{testi.quote}"
+                                            </p>
+                                            <div className="flex items-center gap-4 border-t border-gray-200/50 pt-4">
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-green-300 text-xl font-bold text-white shadow-md">
+                                                    {testi.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900">
+                                                        {testi.name}
+                                                    </h4>
+                                                    <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                                        {testi.role}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <div className="mt-8 flex justify-center gap-2">
+                                <CarouselPrevious className="static h-12 w-12 translate-y-0 border-2 border-gray-200 hover:border-primary hover:text-primary" />
+                                <CarouselNext className="static h-12 w-12 translate-y-0 border-2 border-gray-200 hover:border-primary hover:text-primary" />
+                            </div>
+                        </Carousel>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===================================================================================== */}
+            {/* 5. FAQ */}
+            {/* ===================================================================================== */}
+            <section id="faq" className="bg-gray-50 py-24">
+                <div className="container mx-auto max-w-3xl px-6">
+                    {/* [FONT DISPLAY] */}
+                    <h2 className="mb-12 text-center font-display text-3xl font-bold text-gray-900">
+                        Pertanyaan Umum
+                    </h2>
+                    <div className="space-y-4">
                         <Accordion type="single" collapsible className="w-full">
-                            {faqs.map((faq, index) => (
+                            {faqs.map((faq, idx) => (
                                 <AccordionItem
-                                    key={index}
-                                    value={`item-${index + 1}`}
-                                    className="border-b border-border"
+                                    key={idx}
+                                    value={`item-${idx}`}
+                                    className="mb-4 rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all data-[state=open]:shadow-md"
                                 >
-                                    <AccordionTrigger className="text-left text-lg font-semibold text-primary hover:no-underline">
+                                    <AccordionTrigger className="py-4 text-left text-base font-semibold text-gray-800 hover:text-primary hover:no-underline">
                                         {faq.q}
                                     </AccordionTrigger>
-                                    <AccordionContent className="text-base text-muted-foreground">
+                                    <AccordionContent className="pb-4 leading-relaxed text-gray-600">
                                         {faq.a}
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}
                         </Accordion>
-                    </motion.div>
+                    </div>
                 </div>
             </section>
 
-            {/* 6. Seksi Final Call to Action (HIJAU - bg-primary) */}
-            <section className="bg-primary py-20 text-primary-foreground">
-                <div className="container mx-auto max-w-7xl px-6 text-center">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-4xl font-extrabold"
-                    >
-                        Siap Memasak Hidangan Terbaik?
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="mx-auto mt-4 max-w-2xl text-lg opacity-90"
-                    >
-                        Pesan sekarang dan rasakan perbedaan kualitas produk
-                        segar premium dari PanganKU...
-                    </motion.p>
+            {/* ===================================================================================== */}
+            {/* 6. FOOTER CTA */}
+            {/* ===================================================================================== */}
+            <section className="relative flex items-center justify-center overflow-hidden bg-gray-900 py-32">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
+
+                <div className="relative z-10 container mx-auto max-w-4xl px-6 text-center">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="mt-8"
+                        transition={{ duration: 0.8 }}
                     >
-                        <Link
-                            href="/products"
-                            className="shine-effect inline-block transform rounded-lg bg-card px-8 py-3 text-center font-bold text-primary shadow-lg transition duration-300 hover:-translate-y-1 hover:bg-white/90" // Tombol Putih
-                        >
-                            Mulai Belanja Sekarang
-                        </Link>
+                        {/* [FONT DISPLAY] */}
+                        <h2 className="mb-8 font-display text-4xl leading-tight font-black text-white md:text-7xl">
+                            Hidangan Lezat <br /> Dimulai Dari Sini.
+                        </h2>
+                        <p className="mx-auto mb-12 max-w-2xl text-lg font-light text-gray-300 md:text-xl">
+                            Jangan kompromi soal kualitas makanan keluarga.
+                            Pesan ayam segar PanganKU sekarang dan rasakan
+                            bedanya.
+                        </p>
+                        <div className="flex flex-col justify-center gap-6 sm:flex-row">
+                            <Link href="/products">
+                                <Button
+                                    size="lg"
+                                    className="w-full rounded-full border-0 bg-primary px-12 py-8 text-lg font-bold text-white shadow-2xl transition-all hover:scale-105 hover:shadow-primary/50 sm:w-auto"
+                                >
+                                    Mulai Belanja
+                                </Button>
+                            </Link>
+                            <Link href="/register">
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="w-full rounded-full border-white/30 bg-transparent px-12 py-8 text-lg font-bold text-white backdrop-blur-sm hover:bg-white hover:text-gray-900 sm:w-auto"
+                                >
+                                    Daftar Akun
+                                </Button>
+                            </Link>
+                        </div>
                     </motion.div>
                 </div>
             </section>

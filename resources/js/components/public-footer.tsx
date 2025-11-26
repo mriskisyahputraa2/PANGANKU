@@ -12,7 +12,7 @@ import AppLogo from './app-logo';
 // Tautan (tidak berubah)
 const publicNavItems = [
     { title: 'Beranda', href: '/' },
-    { title: 'Daftar Produk', href: '/products' },
+    { title: 'Produk', href: '/products' },
     { title: 'Kontak', href: '/contact' },
     { title: 'Login', href: '/login' },
 ];

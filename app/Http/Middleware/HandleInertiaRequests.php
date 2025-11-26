@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cart;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,6 +39,16 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        // Hitung jumlah item di keranjang user yang sedang login
+        $cartCount = 0;
+        if ($user = $request->user()) {
+            $cart = Cart::where('user_id', $user->id)->first();
+            if ($cart) {
+                // Menghitung total quantity (misal: 2 Ayam + 1 Bumbu = 3)
+                $cartCount = $cart->items()->sum('quantity');
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -45,6 +56,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Kirim data jumlah keranjang ke semua halaman
+            'cartCount' => $cartCount,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

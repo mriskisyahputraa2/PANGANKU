@@ -12,19 +12,28 @@ class HomepageController extends Controller
 
     public function index()
     {
-        // Ambil 3 produk terlaris atau terbaru (bisa kamu ubah logikanya nanti)
+        // Ambil 4 produk (biar pas 1 baris penuh di layar besar)
         $featuredProducts = Product::with('category')
-            ->latest() // urutkan produk dari yang terbaru
-            ->take(3)  // ambil 3 produk untuk ditampilkan
+            ->where('stock', '>', 0) // Opsional: Hanya tampilkan yang ada stok
+            ->latest()
+            ->take(4)
             ->get()
             ->map(function ($product) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'category' => $product->category ? $product->category->name : '-',
-                    'price' => $product->price,
-                    'image' => $product->image ? asset('storage/' . $product->image) : '/images/placeholder/default-product.png',
                     'slug' => $product->slug,
+                    'price' => $product->price,
+                    'stock' => $product->stock, // [FIX 1] Tambah Stok
+
+                    // [FIX 2] Kategori jadi Object { name: ... }
+                    'category' => [
+                        'name' => $product->category ? $product->category->name : 'Umum'
+                    ],
+
+                    // [FIX 3] Kirim nama file saja (Raw Path)
+                    // Biarkan Frontend yang menambahkan '/storage/'
+                    'image' => $product->image,
                 ];
             });
 
