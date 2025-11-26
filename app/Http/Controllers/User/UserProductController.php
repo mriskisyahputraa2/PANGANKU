@@ -15,25 +15,28 @@ class UserProductController extends Controller
      */
     public function index(Request $request)
     {
-        // =================================================================
-        // ## SEMUA LOGIKA FILTER DIHAPUS ##
-        // =================================================================
+      $query = Product::with('category')->where('stock', '>', 0);
 
-        // Query disederhanakan:
-        // Cukup ambil semua produk, urutkan dari yang terbaru, dan paginasi.
-        $products = Product::with('category')
-                        ->latest()
-                        ->paginate(12) // Menampilkan 12 produk per halaman
-                        ->withQueryString(); // Agar paginasi berfungsi
+        // 1. Filter Search
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+        }
 
-        // Ambil semua kategori (mungkin diperlukan untuk masa depan, tapi tidak wajib)
-        $categories = ProductCategory::all();
+        // 2. Filter Kategori (Slug)
+        if ($categorySlug = $request->input('category')) {
+            $query->whereHas('category', function ($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
 
-        // Kirim hanya data yang diperlukan
+        // 3. Sorting (Opsional, default terbaru)
+        $query->latest();
+
         return Inertia::render('user/products/index', [
-            'products' => $products,
-            'categories' => $categories,
-            // 'filters' Dihapus
+            'products' => $query->paginate(9)->withQueryString(), // 9 per halaman agar grid 3x3 rapi
+            'categories' => ProductCategory::all(),
+            'filters' => $request->only(['search', 'category']),
         ]);
     }
 

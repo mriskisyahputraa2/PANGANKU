@@ -46,7 +46,7 @@ export default function OrdersIndex({
     const hasData = orders.data && orders.data.length > 0;
 
     return (
-        <PublicLayout>
+        <PublicLayout transparentHeader={true}>
             <Head title="Riwayat Pesanan" />
 
             <section className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
