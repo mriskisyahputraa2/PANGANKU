@@ -10,6 +10,11 @@ namespace App\Repositories\Contracts;
 interface OrderRepositoryInterface
 {
     /**
+     * Ambil daftar pesanan milik user tertentu (bisa filter status).
+     */
+    public function getUserOrders($userId, $perPage = 10, $status = null);
+
+    /**
      * Membuat data Order utama (Header).
      * * @param array $data Data pesanan (user_id, total, alamat, dll)
      * @return \App\Models\Order

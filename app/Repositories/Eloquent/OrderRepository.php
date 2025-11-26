@@ -69,4 +69,18 @@ class OrderRepository implements OrderRepositoryInterface
         // withQueryString() penting agar saat klik halaman 2, filter tidak hilang
         return $query->paginate($perPage)->withQueryString();
     }
+
+    public function getUserOrders($userId, $perPage = 10, $status = null)
+    {
+        $query = Order::with(['items.product']) // Eager load item & produk
+            ->where('user_id', $userId)
+            ->latest();
+
+        // Jika ada filter status (untuk Tab Navigasi nanti)
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        return $query->paginate($perPage)->withQueryString();
+    }
 }
